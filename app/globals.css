@@ -20,10 +20,55 @@ body {
   font-family: Arial, Helvetica, sans-serif;
 }
 
-.my-button {
+
+.my-hero-button {
   @apply px-8 py-4 bg-amber-800 text-white font-bold rounded-full shadow-lg hover:bg-white hover:text-amber-800 transition;
 }
 
-.my-title {
-  @apply text-5xl font-semibold mb-10;
+.my-primary-button {
+  @apply px-4 py-2 bg-green-600 text-white font-bold rounded-full shadow-md hover:bg-green-800 transition;
+}
+
+.my-action-button {
+  @apply px-4 py-2 bg-amber-600 text-white font-bold rounded-full shadow-md hover:bg-amber-800 transition;
+}
+
+.my-destroy-button {
+  @apply px-4 py-2 bg-red-600 text-white font-bold rounded-full shadow-md hover:bg-red-800 transition;
+}
+
+.my-grid-panel {
+  @apply flex items-center justify-between mb-4;
+}
+
+.my-standard-text {
+  @apply text-xl font-semibold text-gray-600;
+} 
+
+.my-regular-table {
+  @apply overflow-x-auto bg-white shadow-md rounded-lg overflow-hidden min-h-96;
+}
+
+.my-regular-table > div {
+  @apply overflow-y-auto max-h-96;
+}
+
+.my-regular-table table {
+  @apply min-w-full border-collapse;
+}
+
+.my-regular-table thead {
+  @apply sticky top-0 z-10 bg-gray-50 border-b border-gray-200;
+}
+
+.my-regular-table th {
+  @apply text-left text-gray-600 font-semibold px-6 py-4;
+}
+
+.my-regular-table tbody tr {
+  @apply border-b border-gray-200 hover:bg-gray-50;
+}
+
+.my-regular-table tbody td {
+  @apply px-6 py-4;
 }
