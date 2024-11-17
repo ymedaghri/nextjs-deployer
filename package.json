@@ -9,12 +9,14 @@
     "lint": "next lint"
   },
   "dependencies": {
+    "lowdb": "^7.0.1",
     "next": "15.0.3",
     "react": "19.0.0-rc-66855b96-20241106",
     "react-dom": "19.0.0-rc-66855b96-20241106",
     "simple-git": "^3.27.0"
   },
   "devDependencies": {
+    "@types/lowdb": "^1.0.15",
     "@types/node": "^20",
     "@types/react": "^18",
     "@types/react-dom": "^18",

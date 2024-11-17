@@ -1,13 +1,35 @@
+'use client';
+
 import Link from 'next/link'
-import React from 'react'
+import React, { useEffect } from 'react'
 
 interface Repository {
   name: string, description:string, clone_url:string
 }
 
-const RepositoriesPage = async () => {
-  const res = await fetch('https://api.github.com/users/octocat/repos');
-  const data: Repository[] = await res.json();
+const RepositoriesPage = () => {
+  const [data, setData] = React.useState<Repository[]>([]);
+  
+  async function fetchData() {
+    const res = await fetch('http://localhost:3000/api/repositories');
+    const data: Repository[] = await res.json();
+    setData(data);
+  }
+
+  useEffect(() => {
+    fetchData();
+  }, []);
+
+  async function deleteRepository(name: string) {
+    const confirmed = confirm('Are you sure you want to delete this user?');
+    if (!confirmed) return;
+
+    await fetch(`/api/repositories/${name}`, {
+      method: 'DELETE',
+    });
+
+    await fetchData(); 
+  }
 
   return (
     <>         
@@ -42,7 +64,7 @@ const RepositoriesPage = async () => {
                 <button className="my-action-button">
                   Edit
                 </button>
-                <button className="my-destroy-button">
+                <button className="my-destroy-button" onClick={() => deleteRepository(element.name)}>
                   Delete
                 </button>
               </td>
