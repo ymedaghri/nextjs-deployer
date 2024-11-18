@@ -1,13 +1,24 @@
 import Link from 'next/link'
 import React from 'react'
 import DeleteRepositoryButton from './DeleteRepositoryButton';
+import { revalidatePath } from 'next/cache';
+import { getDb } from '@/lib/db';
 
 interface Repository {
   name: string, description:string, clone_url:string
 }
 
+export async function deleteRepository(repoName: string) {
+  "use server";
+  const db = await getDb(); 
+  db.data.repositories = db.data.repositories.filter((repository) => repository.name !== repoName);
+  await db.write();
+
+  revalidatePath('/repositories');
+}
+
 const RepositoriesPage = async () => {
-    const res = await fetch('http://localhost:3000/api/repositories');
+    const res = await fetch('http://localhost:3000/api/repositories', { cache: 'no-store'});
     const data: Repository[] = await res.json();
 
   return (
@@ -43,7 +54,7 @@ const RepositoriesPage = async () => {
                 <button className="my-action-button">
                   Edit
                 </button>
-                <DeleteRepositoryButton repoName={element.name}/>
+                <DeleteRepositoryButton repoName={element.name} deleteAction={deleteRepository}/>
               </td>
             </tr>
             ))}            

@@ -1,25 +1,18 @@
 'use client';
-import { useRouter } from 'next/navigation';
 import React from 'react'
 
 interface DeleteRepositoryButtonProps {
-  repoName: string
+  repoName: string,
+  deleteAction: (repoName:string) => void,
 }
 
-const DeleteRepositoryButton = ({repoName}:DeleteRepositoryButtonProps) => {
-  const router = useRouter();
-
+const DeleteRepositoryButton = ({repoName, deleteAction}:DeleteRepositoryButtonProps) => {
+  
   async function handleDelete() {
     const confirmed = confirm(`Are you sure you want to delete ${repoName}?`);
     if (!confirmed) return;
 
-    const response = await fetch(`/api/repositories/${repoName}`, {
-      method: 'DELETE',
-    });
-
-    if (response.ok) {
-      router.refresh();
-    }
+    await deleteAction(repoName);
   }
   
   return (
