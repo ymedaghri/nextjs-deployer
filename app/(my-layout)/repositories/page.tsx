@@ -8,7 +8,7 @@ interface Repository {
   name: string, description:string, clone_url:string
 }
 
-export async function deleteRepository(repoName: string) {
+async function deleteRepository(repoName: string) {
   "use server";
   const db = await getDb(); 
   db.data.repositories = db.data.repositories.filter((repository) => repository.name !== repoName);
