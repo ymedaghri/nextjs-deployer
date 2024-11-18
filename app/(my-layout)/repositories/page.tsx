@@ -1,7 +1,7 @@
 import Link from 'next/link'
 import React, { Suspense } from 'react'
 import RepositoriesTable from './RepositoriesTable';
-import Waiting from './Waiting';
+import Waiting from '../../generic-components/Waiting';
 
 const RepositoriesPage = async () => {    
   return (
