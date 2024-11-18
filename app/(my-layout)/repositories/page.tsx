@@ -4,10 +4,6 @@ import DeleteRepositoryButton from './DeleteRepositoryButton';
 import { revalidatePath } from 'next/cache';
 import { getDb } from '@/lib/db';
 
-interface Repository {
-  name: string, description:string, clone_url:string
-}
-
 async function deleteRepository(repoName: string) {
   "use server";
   const db = await getDb(); 
