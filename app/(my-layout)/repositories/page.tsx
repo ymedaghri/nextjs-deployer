@@ -1,22 +1,9 @@
 import Link from 'next/link'
-import React from 'react'
-import DeleteRepositoryButton from './DeleteRepositoryButton';
-import { revalidatePath } from 'next/cache';
-import { getDb } from '@/lib/db';
+import React, { Suspense } from 'react'
+import RepositoriesTable from './RepositoriesTable';
+import Waiting from './Waiting';
 
-async function deleteRepository(repoName: string) {
-  "use server";
-  const db = await getDb(); 
-  db.data.repositories = db.data.repositories.filter((repository) => repository.name !== repoName);
-  await db.write();
-
-  revalidatePath('/repositories');
-}
-
-const RepositoriesPage = async () => {
-    const db = await getDb(); 
-    const data = db.data.repositories;
-
+const RepositoriesPage = async () => {    
   return (
     <>         
       <div className="my-grid-panel">
@@ -28,36 +15,9 @@ const RepositoriesPage = async () => {
           Add New
         </button></Link>
       </div>
-      
-      <div className="my-regular-table">
-        <div>    
-        <table>
-          <thead>
-            <tr>
-              <th>Name</th>
-              <th>Description</th>
-              <th>Uri</th>
-              <th className='w-52'>Actions</th>
-            </tr>
-          </thead>
-          <tbody>
-            {data.map((element, index) => (
-              <tr key={`repository_${index}`}>
-              <td>{element.name}</td>
-              <td>{element.description}</td>
-              <td>{element.clone_url}</td>
-              <td className="space-x-2">
-                <button className="my-action-button">
-                  Edit
-                </button>
-                <DeleteRepositoryButton repoName={element.name} deleteAction={deleteRepository}/>
-              </td>
-            </tr>
-            ))}            
-          </tbody>
-        </table>
-      </div>
-    </div>
+      <Suspense fallback={<Waiting/>}>
+        <RepositoriesTable />
+      </Suspense>
     </>
   )
 }

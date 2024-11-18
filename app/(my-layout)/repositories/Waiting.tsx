@@ -1,6 +1,6 @@
 import React from 'react'
 
-const LoadingPage = () => {
+const Waiting = () => {
   return (
       <div className="flex flex-col items-center justify-center space-y-4 bg-white p-6 h-96">
         <div className="w-16 h-16 border-4 border-blue-500 border-t-transparent rounded-full animate-spin"></div>
@@ -9,4 +9,4 @@ const LoadingPage = () => {
   )
 }
 
-export default LoadingPage
+export default Waiting
