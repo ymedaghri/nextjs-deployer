@@ -18,8 +18,8 @@ async function deleteRepository(repoName: string) {
 }
 
 const RepositoriesPage = async () => {
-    const res = await fetch('http://localhost:3000/api/repositories', { cache: 'no-store'});
-    const data: Repository[] = await res.json();
+    const db = await getDb(); 
+    const data = db.data.repositories;
 
   return (
     <>         
