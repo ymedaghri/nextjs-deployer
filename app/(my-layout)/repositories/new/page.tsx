@@ -6,8 +6,6 @@ import NewRepositoryForm from './form';
 
 async function addRepository(formData: FormData) {
   "use server";
-  await new Promise((resolve) => setTimeout(resolve, 3000));
-
   const db = await getDb(); 
   const newRepository = { 
     name:formData.get('name') as string, 
