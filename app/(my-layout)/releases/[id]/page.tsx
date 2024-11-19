@@ -4,13 +4,13 @@ import Waiting from '@/app/generic-components/Waiting';
 import SubmoduleCommits from './SubmoduleCommits';
 
 interface ReleasesPageProps {
-  params: { id: string };
-  searchParams: { name?: string };
+  params: Promise<{ id: string }>;
+  searchParams: Promise<{ name?: string }>;
 }
 
 const ReleasesPage = async ({ params, searchParams }: ReleasesPageProps) => {    
-  const { id  } = params;
-  const { name } = searchParams;
+  const { id  } = await params;
+  const { name } = await searchParams;
   return (
     <>         
       <div className="my-grid-panel">

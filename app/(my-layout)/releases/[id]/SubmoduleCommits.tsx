@@ -1,91 +1,107 @@
-import React from 'react'
-import path from 'path';
-import simpleGit from 'simple-git';
-import fs from 'fs';
-import { getDb, Repository } from '@/lib/db';
+'use client';
+import { Commit, LOG_ACTIONS, SubmoduleStream } from '@/app/api/submodule-progress/[id]/types';
+import React, { useEffect, useRef, useState } from 'react'
 
 interface SubmoduleCommitsProps {
-    release_id: string;
-    repositories: Repository
-  }
-  
+  release_id: string;
+}
 
-type Submodule = {
-    name: string;
-    path: string;
-};
-  
-  function parseGitModules(filePath: string): Submodule[] {
-    const data = fs.readFileSync(filePath, 'utf-8');
-    const submoduleRegex = /\[submodule "(.*?)"\]\s+path = (.+)/g;
-    const submodules: Submodule[] = [];
-    let match;
-  
-    while ((match = submoduleRegex.exec(data)) !== null) {
-      const [, name, path] = match;
-      submodules.push({ name, path });
+const STYLE_INFO = 'text-green-300';
+const STYLE_ACTION = 'text-yellow-300';
+const STYLE_FINISHED = 'text-orange-300';
+const STYLE_ERROR = 'text-red-300';
+
+const SubmoduleCommits = ({release_id}:SubmoduleCommitsProps) => {
+  const [submodules, setSubmodules] = useState<{name:string; commits:Commit[];}[]>([]);
+  const [statusLogs, setStatusLogs] = useState<{message?:string; color:string}[]>([{message:'Loading ...', color:STYLE_INFO}]);
+
+  useEffect(() => {
+    const fetchStream = async () => {
+      const response = await fetch(`/api/submodule-progress/${release_id}`);
+
+      if (!response.body) {
+        throw new Error('ReadableStream is not supported.');
+      }
+
+      const reader = response.body.getReader();
+      const decoder = new TextDecoder();
+      let buffer = '';
+
+      const processChunk = async () => {
+        const { done, value } = await reader.read();
+        if (done) return;
+
+        buffer += decoder.decode(value); 
+        const parts = buffer.split('\n');
+        buffer = parts.pop() || '';
+
+        parts.forEach((part) => {
+          try {
+            const message = JSON.parse(part) as SubmoduleStream;
+            switch (message.action){
+              case LOG_ACTIONS.COMMITS:
+                if(message.commits!.length > 0) setSubmodules((prevSubmodules) => [...prevSubmodules, {name:message.submodule!, commits:message.commits!}]);
+                break;
+              case LOG_ACTIONS.ERROR:
+                setStatusLogs((prevStatusLogs) => [...prevStatusLogs, {message:`Error : ${message.message}`, color:STYLE_ERROR}, {color:STYLE_ERROR}]);
+                break;
+              case LOG_ACTIONS.CHECKOUT:
+                setStatusLogs((prevStatusLogs) => [...prevStatusLogs, {message:`> Submodule ${message.submodule} : ${message.message}`, color:STYLE_INFO}]);
+                break;
+              case LOG_ACTIONS.PULL:
+                setStatusLogs((prevStatusLogs) => [...prevStatusLogs, {message:`> Submodule ${message.submodule} : ${message.message}`, color:STYLE_ACTION}, {color:STYLE_INFO}]);
+                break;
+              case LOG_ACTIONS.ALL_DONE:
+              default:
+                setStatusLogs((prevStatusLogs) => [...prevStatusLogs, { message: message.message!, color:STYLE_FINISHED}]);
+                break;
+            }           
+          } catch (err) {
+            setStatusLogs((prevStatusLogs) => [...prevStatusLogs, {message:`Error : An error occurred during json parsing : ${(err as {message:string}).message}`, color:STYLE_ERROR}]);
+          }
+        });
+
+        await processChunk();
+      };
+
+      await processChunk();
+    };
+
+    fetchStream().catch(
+      (err)=>{
+        setStatusLogs((prevStatusLogs) => [...prevStatusLogs, {message:`Error : An error occurred during json parsing : ${(err as {message:string}).message}`, color:STYLE_ERROR}]);
+      });
+  }, [release_id]);
+
+
+const scrollRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (scrollRef.current) {
+      scrollRef.current.scrollTop = scrollRef.current.scrollHeight; // Scroll to bottom
     }
-  
-    return submodules;
-  }
+  }, [statusLogs]); // Run whenever statusLogs updates
 
-async function getSubmoduleCommits(tickets:string[], repositories:Repository[]): Promise<Record<string, { hash:string; date:string; message:string;}[]>> {
-    const repoPath = process.env.REPO_PATH!;
-    const submodulesFile = path.join(repoPath, '.gitmodules');      
-    const submodules = parseGitModules(submodulesFile);
-    
-    const commits: Record<string, { hash: string; date: string; message: string; }  []> = {};
-  
-    const ticketsRegex = new RegExp(`^(${tickets.join('|')})`, 'i');
 
-    for (const submodule of submodules) {
-        const repository = repositories.find((repo) => repo.name === submodule.name);
-        if (!repository) {
-            throw new Error(`Repository not found for submodule ${submodule.name}`);
-        }
-        const submoduleRepoPath = path.join(repoPath, submodule.path);
-        const submoduleGit = simpleGit(submoduleRepoPath);
-        console.log(`Processing submodule ${submodule.name}`);
-        await submoduleGit.checkout(repository.main_branch);
-        console.log(`submodule ${submodule.name} checked out to ${repository.main_branch}.`);
-        await submoduleGit.pull('origin', repository.main_branch);
-        console.log(`submodule ${submodule.name} pulled latest changes. Checking commits for tickets.`);
-        
-        const log = await submoduleGit.log({ maxCount: 50 });
-        
-        const filteredCommits = log.all.filter((commit) => ticketsRegex.test(commit.message));
-
-        if (filteredCommits.length > 0) {
-            commits[submodule.name] = filteredCommits.map((commit) => ({
-            hash: commit.hash,
-            date: commit.date,
-            message: commit.message,
-            }));
-        }
-    }
-
-    return commits;
-  }
-const SubmoduleCommits = async ({release_id}:SubmoduleCommitsProps) => {
-    const db = await getDb(); 
-    const release = db.data.releases.find((release) => release.id === release_id);
-    const repositories = db.data.repositories;
-    const commits = await getSubmoduleCommits(release?.tickets.map((ticket) => ticket.name) || []  , repositories);
-
-  
-  return (
+return (
     <div>
         <div className="space-y-6">
-        {Object.entries(commits).map(([submodule, commits]) => (
-            <div key={submodule}
-            className="bg-white shadow-md rounded-lg p-6 border border-gray-200">
-            <h2 className="text-lg font-semibold text-gray-800 mb-4">{submodule}</h2>
+          <div
+            className="h-40 bg-gray-800 rounded-md px-4 py-2 border border-gray-700 ">
+              <div ref={scrollRef} className='h-36 pt-2 pb-1 overflow-y-auto'>
+                {statusLogs.map((status, index)=> (<p className={`${status.color} min-h-[1rem]`} key={`status-log-${index}`}>{status.message}</p>))}
+            </div>        
+          </div>
+        {submodules.map((submodule, index) => (
+            <div key={submodule.name}
+            className={`${index%2 ? 'bg-sky-100' : 'bg-blue-200'} shadow-md rounded-lg p-6 border border-gray-200`}>
+            <h2 className="text-lg font-semibold text-gray-800 mb-4">{submodule.name}</h2>
             <ul className="space-y-2">
-                {commits.map((element) => (
-                <li key={element.hash}
+                {submodule.commits.map((commit) => (
+                <li key={commit.hash}
                 className="text-gray-700 text-sm bg-gray-50 rounded-md px-4 py-2 border border-gray-200">
-                    {element.message} 
-                    <span className="text-gray-500"> : {element.hash}</span>
+                    {commit.message} 
+                    <span className="text-gray-500"> : {commit.hash}</span>
                 </li>
                 ))}
             </ul>
