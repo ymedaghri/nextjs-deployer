@@ -14,7 +14,7 @@ const ReleasesTable = async () => {
             <tr>
             <th>Name</th>
             <th>Tickets</th>
-            <th className='w-52'>Actions</th>
+            <th className='w-80'>Actions</th>
             </tr>
         </thead>
         <tbody>
@@ -29,9 +29,12 @@ const ReleasesTable = async () => {
               }
             </td>
             <td className="space-x-2">
-                <Link href={`/releases/${element.id}?name=${element.name}`} className="my-action-button">
-                Show Deps
-                </Link>                
+                <Link href={`/releases/${element.id}?name=${element.name}&pull=yes`} className="my-action-button">
+                Pull & Deps
+                </Link>
+                <Link href={`/releases/${element.id}?name=${element.name}`} className="my-primary-button">
+                Deps No-Pull
+                </Link>                  
             </td>
             </tr>
             ))}            

@@ -4,6 +4,7 @@ import React, { useEffect, useRef, useState } from 'react'
 
 interface SubmoduleCommitsProps {
   release_id: string;
+  pull?: boolean;
 }
 
 const STYLE_INFO = 'text-green-300';
@@ -11,13 +12,16 @@ const STYLE_ACTION = 'text-yellow-300';
 const STYLE_FINISHED = 'text-orange-300';
 const STYLE_ERROR = 'text-red-300';
 
-const SubmoduleCommits = ({release_id}:SubmoduleCommitsProps) => {
+const SubmoduleCommits = ({release_id, pull}:SubmoduleCommitsProps) => {
   const [submodules, setSubmodules] = useState<{name:string; commits:Commit[];}[]>([]);
   const [statusLogs, setStatusLogs] = useState<{message?:string; color:string}[]>([{message:'Loading ...', color:STYLE_INFO}]);
 
   useEffect(() => {
+    const controller = new AbortController();
+    const { signal } = controller;
+
     const fetchStream = async () => {
-      const response = await fetch(`/api/submodule-progress/${release_id}`);
+      const response = await fetch(`/api/submodule-progress/${release_id}?pull=${pull}`, { signal });
 
       if (!response.body) {
         throw new Error('ReadableStream is not supported.');
@@ -64,14 +68,20 @@ const SubmoduleCommits = ({release_id}:SubmoduleCommitsProps) => {
         await processChunk();
       };
 
-      await processChunk();
+      await processChunk();     
     };
 
     fetchStream().catch(
       (err)=>{
-        setStatusLogs((prevStatusLogs) => [...prevStatusLogs, {message:`Error : An error occurred during json parsing : ${(err as {message:string}).message}`, color:STYLE_ERROR}]);
+        if (err.name !== 'AbortError') {
+          setStatusLogs((prevStatusLogs) => [...prevStatusLogs, {message:`Error : An error occurred during stream reading : ${(err as {message:string}).message}`, color:STYLE_ERROR}]);
+        }        
       });
-  }, [release_id]);
+
+      return () => {
+        controller.abort();
+      };
+  }, [release_id, pull]);
 
 
 const scrollRef = useRef<HTMLDivElement>(null);
