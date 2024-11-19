@@ -10,7 +10,8 @@ async function addRepository(formData: FormData) {
   const newRepository = { 
     name:formData.get('name') as string, 
     description:formData.get('description') as string,
-    clone_url:formData.get('cloneUrl') as string
+    clone_url:formData.get('cloneUrl') as string,
+    main_branch:formData.get('mainBranch') as string
   };
   db.data.repositories.push(newRepository);  
   await db.write();  

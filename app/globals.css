@@ -21,7 +21,7 @@ body {
 }
 
 .my-badge {
-  @apply px-3 py-1 bg-blue-500 text-white text-xs font-bold rounded-full shadow hover:bg-white transition;
+  @apply px-3 py-1 bg-blue-500 text-white text-xs font-bold rounded-full shadow transition;
 }
 
 .my-hero-button {

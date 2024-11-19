@@ -25,6 +25,7 @@ const RepositoriesTable = async () => {
             <th>Name</th>
             <th>Description</th>
             <th>Uri</th>
+            <th>Main branch</th>
             <th className='w-52'>Actions</th>
             </tr>
         </thead>
@@ -34,6 +35,7 @@ const RepositoriesTable = async () => {
             <td>{element.name}</td>
             <td>{element.description}</td>
             <td>{element.clone_url}</td>
+            <td>{element.main_branch}</td>
             <td className="space-x-2">
                 <button className="my-action-button">
                 Edit
