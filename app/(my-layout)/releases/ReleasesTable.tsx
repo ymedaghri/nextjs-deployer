@@ -4,7 +4,7 @@ import React from 'react'
 
 const ReleasesTable = async () => {
     const db = await getDb(); 
-    const data = db.data.releases;
+    const releases = db.data.releases;
 
   return (
     <div className="my-regular-table">
@@ -18,7 +18,7 @@ const ReleasesTable = async () => {
             </tr>
         </thead>
         <tbody>
-            {data.map((element, index) => (
+            {releases.map((element, index) => (
             <tr key={`repository_${index}`}>
             <td>{element.name}</td>
             <td className='space-x-2'>
