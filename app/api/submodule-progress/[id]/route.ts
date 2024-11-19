@@ -9,6 +9,10 @@ type Submodule = {
     path: string;
 };
 
+interface GETProps {
+  params: Promise<{ id: string }>;
+}
+
 function parseGitModules(filePath: string): Submodule[] {
   const data = fs.readFileSync(filePath, 'utf-8');
   const submoduleRegex = /\[submodule "(.*?)"\]\s+path = (.+)/g;
@@ -23,9 +27,12 @@ function parseGitModules(filePath: string): Submodule[] {
   return submodules;
   }
 
-export async function GET(_req: Request, { params }: { params: Promise<{ id: string }> }) {
+export async function GET(req: Request, { params }: GETProps) {
   
   const { id } = await params
+  const { searchParams } = new URL(req.url);
+  const pull = searchParams.get('pull') === 'yes';
+
   const db = await getDb(); 
   const release = db.data.releases.find((release) => release.id === id);
   const repositories = db.data.repositories;
@@ -58,12 +65,16 @@ export async function GET(_req: Request, { params }: { params: Promise<{ id: str
           const submoduleGit = simpleGit(submoduleRepoPath);
       
           try {
-            await submoduleGit.checkout(repository.main_branch);
-            sendProgress({ submodule: submodule.name, message: `Checked out to ${repository.main_branch}`, action: LOG_ACTIONS.CHECKOUT });
-      
-            await submoduleGit.pull('origin', repository.main_branch);
-            sendProgress({ submodule: submodule.name, message: 'Pulled latest changes', action: LOG_ACTIONS.PULL });
-      
+            if(pull) {
+              await submoduleGit.checkout(repository.main_branch);
+              sendProgress({ submodule: submodule.name, message: `Checked out to ${repository.main_branch}`, action: LOG_ACTIONS.CHECKOUT });
+        
+              await submoduleGit.pull('origin', repository.main_branch);
+              sendProgress({ submodule: submodule.name, message: 'Pulled latest changes', action: LOG_ACTIONS.PULL });
+            }
+
+            sendProgress({ submodule: submodule.name, message: `Fetching logs for ${submodule.name}`, action: LOG_ACTIONS.CHECKOUT });
+
             const log = await submoduleGit.log({ maxCount: 50 });
             const filteredCommits = log.all.filter((commit) => ticketsRegex.test(commit.message));
       

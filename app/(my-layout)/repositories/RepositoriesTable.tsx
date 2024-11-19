@@ -13,8 +13,8 @@ async function deleteRepository(repoName: string) {
   }
 
 const RepositoriesTable = async () => {
-    const db = await getDb(); 
-    const data = db.data.repositories;
+  const db = await getDb(); 
+  const data = db.data.repositories;
 
   return (
     <div className="my-regular-table">
